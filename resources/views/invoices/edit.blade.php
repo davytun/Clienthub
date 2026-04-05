@@ -91,10 +91,17 @@
     </div>
 
     @push('scripts')
+    @php
+        $initialItems = old('items', $invoice->items->map(fn ($i) => [
+            'description' => $i->description,
+            'quantity'    => $i->quantity,
+            'unit_price'  => (float) $i->unit_price,
+        ])->values()->toArray());
+    @endphp
     <script>
         function invoiceForm() {
             return {
-                items: @json(old('items', $invoice->items->map(fn($i) => ['description' => $i->description, 'quantity' => $i->quantity, 'unit_price' => (float)$i->unit_price]))),
+                items: @json($initialItems),
                 addItem()  { this.items.push({ description: '', quantity: 1, unit_price: 0 }); },
                 removeItem(i) { this.items.splice(i, 1); },
                 total()    { return this.items.reduce((s, i) => s + (i.quantity * i.unit_price), 0); },
