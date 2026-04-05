@@ -2,9 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Invoice;
-use App\Models\Project;
-use App\Models\User;
 use Illuminate\View\View;
 
 class DashboardController extends Controller
@@ -13,11 +10,13 @@ class DashboardController extends Controller
     {
         $business = auth()->user()->business;
 
+        // Use explicit business relations — never rely solely on the global BusinessScope
+        // for aggregate stats shown to the owner.
         $stats = [
-            'clients'          => User::where('business_id', $business->id)->where('role', 'client')->count(),
-            'active_projects'  => Project::where('status', 'active')->count(),
-            'unpaid_invoices'  => Invoice::whereIn('status', ['sent'])->count(),
-            'total_invoiced'   => Invoice::whereIn('status', ['sent', 'paid'])->sum('total'),
+            'clients'         => $business->clients()->count(),
+            'active_projects' => $business->projects()->where('status', 'active')->count(),
+            'unpaid_invoices' => $business->invoices()->whereIn('status', ['sent'])->count(),
+            'total_invoiced'  => $business->invoices()->whereIn('status', ['sent', 'paid'])->sum('total'),
         ];
 
         return view('dashboard', compact('stats'));

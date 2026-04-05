@@ -3,7 +3,7 @@
         Hi <strong>{{ $client->name }}</strong>, set a password to activate your account.
     </div>
 
-    <form method="POST" action="{{ route('client.invitation.activate', ['token' => $token]) }}{{ '?' . http_build_query(request()->query()) }}">
+    <form method="POST" action="{{ route('client.invitation.activate', ['token' => $token]) }}?{{ http_build_query(request()->only('expires', 'signature')) }}">
         @csrf
 
         <!-- Password -->

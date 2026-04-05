@@ -7,10 +7,13 @@ use App\Mail\ClientInvitationMail;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Password;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class InvitationController extends Controller
@@ -21,6 +24,16 @@ class InvitationController extends Controller
      */
     public function send(Request $request): RedirectResponse
     {
+        // 10 invitations per staff member per hour
+        $throttleKey = 'invite:' . auth()->id();
+        if (RateLimiter::tooManyAttempts($throttleKey, 10)) {
+            $seconds = RateLimiter::availableIn($throttleKey);
+            throw ValidationException::withMessages([
+                'email' => "Too many invitations sent. Please wait {$seconds} seconds before sending another.",
+            ]);
+        }
+        RateLimiter::hit($throttleKey, 3600);
+
         $request->validate([
             'name'  => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255', 'unique:users,email'],
@@ -77,15 +90,22 @@ class InvitationController extends Controller
             'password' => ['required', 'confirmed', Password::defaults()],
         ]);
 
-        $client = User::where('invitation_token', $token)
-            ->whereNull('invitation_accepted_at')
-            ->firstOrFail();
+        // Wrap in a transaction with a row lock to prevent two concurrent requests
+        // from both activating the same invitation token (TOCTOU race condition).
+        $client = DB::transaction(function () use ($token, $request) {
+            $client = User::where('invitation_token', $token)
+                ->whereNull('invitation_accepted_at')
+                ->lockForUpdate()
+                ->firstOrFail();
 
-        $client->update([
-            'password'               => $request->password,
-            'invitation_token'       => null,
-            'invitation_accepted_at' => now(),
-        ]);
+            $client->update([
+                'password'               => $request->password,
+                'invitation_token'       => null,
+                'invitation_accepted_at' => now(),
+            ]);
+
+            return $client;
+        });
 
         auth()->guard('client')->login($client);
 
