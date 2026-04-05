@@ -37,8 +37,14 @@
 
                     <div class="hidden sm:flex sm:ms-8 space-x-6">
                         <a href="{{ route('client.projects.index') }}"
-                           class="text-sm py-5 inline-block px-1 {{ request()->routeIs('client.projects.*') ? 'brand-active-tab' : 'text-gray-500 hover:text-gray-700' }}">
+                           class="text-sm py-5 inline-flex items-center gap-1 px-1 {{ request()->routeIs('client.projects.*') ? 'brand-active-tab' : 'text-gray-500 hover:text-gray-700' }}">
                             My Projects
+                            @php $unread = $client->unreadMessageCount(); @endphp
+                            @if($unread > 0)
+                                <span class="inline-flex items-center justify-center w-4 h-4 text-[10px] font-bold leading-none text-white bg-red-500 rounded-full">
+                                    {{ $unread > 9 ? '9+' : $unread }}
+                                </span>
+                            @endif
                         </a>
                         <a href="{{ route('client.invoices.index') }}"
                            class="text-sm py-5 inline-block px-1 {{ request()->routeIs('client.invoices.*') ? 'brand-active-tab' : 'text-gray-500 hover:text-gray-700' }}">

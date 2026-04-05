@@ -33,6 +33,12 @@ class ProjectController extends Controller
 
         $project->load(['files.uploader', 'messages.sender']);
 
+        // Mark all staff-sent messages on this project as read for the client
+        $project->messages()
+            ->where('sender_id', '!=', $this->client()->id)
+            ->whereNull('read_at')
+            ->update(['read_at' => now()]);
+
         return view('client.projects.show', compact('project'));
     }
 

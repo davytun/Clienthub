@@ -24,7 +24,15 @@
                     </x-nav-link>
                     @endif
                     <x-nav-link :href="route('projects.index')" :active="request()->routeIs('projects.*')">
-                        {{ __('Projects') }}
+                        <span class="relative inline-flex items-center gap-1">
+                            {{ __('Projects') }}
+                            @php $unread = auth()->user()->unreadMessageCount(); @endphp
+                            @if($unread > 0)
+                                <span class="inline-flex items-center justify-center w-4 h-4 text-[10px] font-bold leading-none text-white bg-red-500 rounded-full">
+                                    {{ $unread > 9 ? '9+' : $unread }}
+                                </span>
+                            @endif
+                        </span>
                     </x-nav-link>
                     <x-nav-link :href="route('invoices.index')" :active="request()->routeIs('invoices.*')">
                         {{ __('Invoices') }}
