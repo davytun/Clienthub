@@ -32,6 +32,10 @@ class FileController extends Controller
         $extension = $uploaded->getClientOriginalExtension();
         $storagePath = "files/{$project->business_id}/{$project->id}/" . Str::uuid() . ".{$extension}";
 
+        // Strip path separators and control characters from the filename before storing.
+        $safeName = preg_replace('/[^\w.\-_ ]/', '', basename($uploaded->getClientOriginalName()));
+        $safeName = $safeName ?: 'file';
+
         // Store on the default local disk (private — not publicly accessible)
         Storage::put($storagePath, file_get_contents($uploaded->getRealPath()));
 
@@ -39,7 +43,7 @@ class FileController extends Controller
             'project_id'    => $project->id,
             'business_id'   => $project->business_id,
             'uploaded_by'   => auth()->id(),
-            'original_name' => $uploaded->getClientOriginalName(),
+            'original_name' => $safeName,
             'path'          => $storagePath,
             'size_bytes'    => $uploaded->getSize(),
         ]);

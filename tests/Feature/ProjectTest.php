@@ -102,6 +102,6 @@ class ProjectTest extends TestCase
                 'title'     => 'Cross-tenant project',
                 'status'    => 'active',
             ])
-            ->assertStatus(404); // firstOrFail() throws 404 for foreign client
+            ->assertSessionHasErrors('client_id'); // form request rejects cross-business client_id
     }
 }

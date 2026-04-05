@@ -19,6 +19,8 @@ class BusinessSettingsController extends Controller
 
     public function update(Request $request): RedirectResponse
     {
+        abort_unless(auth()->user()->isOwner(), 403);
+
         $request->validate([
             'name'        => ['required', 'string', 'max:255'],
             'brand_color' => ['required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
