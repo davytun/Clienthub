@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Auth;
 
+use App\Models\Business;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -12,43 +13,59 @@ class AuthenticationTest extends TestCase
 
     public function test_login_screen_can_be_rendered(): void
     {
-        $response = $this->get('/login');
-
-        $response->assertStatus(200);
+        $this->get('/login')->assertOk();
     }
 
-    public function test_users_can_authenticate_using_the_login_screen(): void
+    public function test_users_can_authenticate(): void
     {
-        $user = User::factory()->create();
-
-        $response = $this->post('/login', [
-            'email' => $user->email,
-            'password' => 'password',
+        $business = Business::create(['name' => 'Test Co']);
+        $user     = User::create([
+            'business_id' => $business->id,
+            'name'        => 'Test User',
+            'email'       => 'test@example.com',
+            'password'    => bcrypt('password'),
+            'role'        => 'owner',
         ]);
-
-        $this->assertAuthenticated();
-        $response->assertRedirect(route('dashboard', absolute: false));
-    }
-
-    public function test_users_can_not_authenticate_with_invalid_password(): void
-    {
-        $user = User::factory()->create();
 
         $this->post('/login', [
-            'email' => $user->email,
-            'password' => 'wrong-password',
+            'email'    => 'test@example.com',
+            'password' => 'password',
+        ])->assertRedirect('/dashboard');
+
+        $this->assertAuthenticatedAs($user);
+    }
+
+    public function test_users_cannot_authenticate_with_wrong_password(): void
+    {
+        $business = Business::create(['name' => 'Test Co']);
+        User::create([
+            'business_id' => $business->id,
+            'name'        => 'Test User',
+            'email'       => 'test@example.com',
+            'password'    => bcrypt('password'),
+            'role'        => 'owner',
         ]);
+
+        $this->post('/login', [
+            'email'    => 'test@example.com',
+            'password' => 'wrong-password',
+        ])->assertSessionHasErrors('email');
 
         $this->assertGuest();
     }
 
     public function test_users_can_logout(): void
     {
-        $user = User::factory()->create();
+        $business = Business::create(['name' => 'Test Co']);
+        $user     = User::create([
+            'business_id' => $business->id,
+            'name'        => 'Test User',
+            'email'       => 'test@example.com',
+            'password'    => bcrypt('password'),
+            'role'        => 'owner',
+        ]);
 
-        $response = $this->actingAs($user)->post('/logout');
-
+        $this->actingAs($user)->post('/logout')->assertRedirect('/');
         $this->assertGuest();
-        $response->assertRedirect('/');
     }
 }

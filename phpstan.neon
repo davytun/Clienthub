@@ -1,0 +1,21 @@
+includes:
+    - vendor/larastan/larastan/extension.neon
+
+parameters:
+    paths:
+        - app
+
+    # Level 6 catches real bugs without being noise-heavy on an existing codebase.
+    # 0 = basic | 5 = stricter types | 8 = very strict | 9 = max
+    level: 6
+
+    # Ignore checks that are too noisy for generated/blade code
+    checkMissingIterableValueType: false
+    checkGenericClassInNonGenericObjectType: false
+
+    ignoreErrors:
+        # Route model binding — PHPStan can't infer the resolved type from route parameters
+        - '#Call to an undefined method Illuminate\\Database\\Eloquent\\Builder#'
+
+    excludePaths:
+        - app/Http/Middleware/RedirectIfAuthenticated.php
