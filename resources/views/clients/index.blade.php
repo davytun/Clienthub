@@ -9,6 +9,9 @@
             @if(session('success'))
                 <div class="p-4 bg-green-100 text-green-800 rounded">{{ session('success') }}</div>
             @endif
+            @if(session('error'))
+                <div class="p-4 bg-red-100 text-red-800 rounded">{{ session('error') }}</div>
+            @endif
 
             {{-- Invite form --}}
             <div class="bg-white shadow-sm rounded-lg p-6">
@@ -39,6 +42,7 @@
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Joined</th>
+                                <th class="px-6 py-3"></th>
                             </tr>
                         </thead>
                         <tbody class="bg-white divide-y divide-gray-200">
@@ -55,6 +59,16 @@
                                     </td>
                                     <td class="px-6 py-4 text-sm text-gray-400">
                                         {{ $client->invitation_accepted_at?->format('d M Y') ?? '—' }}
+                                    </td>
+                                    <td class="px-6 py-4 text-sm text-right">
+                                        @unless($client->hasAcceptedInvitation())
+                                            <form method="POST" action="{{ route('clients.resend-invitation', $client) }}" class="inline">
+                                                @csrf
+                                                <button type="submit" class="text-indigo-600 hover:text-indigo-800 text-xs font-medium">
+                                                    Resend invite
+                                                </button>
+                                            </form>
+                                        @endunless
                                     </td>
                                 </tr>
                             @endforeach

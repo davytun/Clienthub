@@ -24,6 +24,7 @@ Route::middleware(['auth', 'auth.staff'])->group(function () {
     // Clients management
     Route::get('/clients', [ClientController::class, 'index'])->name('clients.index');
     Route::post('/clients/invite', [InvitationController::class, 'send'])->name('clients.invite');
+    Route::post('/clients/{client}/resend-invitation', [InvitationController::class, 'resend'])->name('clients.resend-invitation');
 
     // Projects + nested messages
     Route::resource('projects', ProjectController::class);

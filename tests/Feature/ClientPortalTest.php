@@ -119,6 +119,47 @@ class ClientPortalTest extends TestCase
         $this->assertGuest('client');
     }
 
+    public function test_resend_invitation_generates_new_token_and_queues_mail(): void
+    {
+        Mail::fake();
+
+        [$business, $owner] = $this->makeOwnerAndBusiness();
+
+        $client = User::create([
+            'business_id'      => $business->id,
+            'name'             => 'Eve',
+            'email'            => 'eve@example.com',
+            'role'             => 'client',
+            'invitation_token' => 'old-token-abc',
+        ]);
+
+        $this->actingAs($owner)
+            ->post("/clients/{$client->id}/resend-invitation")
+            ->assertRedirect();
+
+        $client->refresh();
+        $this->assertNotEquals('old-token-abc', $client->invitation_token, 'Token should be rotated');
+        $this->assertNotNull($client->invitation_token);
+        Mail::assertQueued(\App\Mail\ClientInvitationMail::class);
+    }
+
+    public function test_resend_invitation_is_blocked_for_already_active_clients(): void
+    {
+        [$business, $owner] = $this->makeOwnerAndBusiness();
+
+        $client = User::create([
+            'business_id'            => $business->id,
+            'name'                   => 'Frank',
+            'email'                  => 'frank@example.com',
+            'role'                   => 'client',
+            'invitation_accepted_at' => now(),
+        ]);
+
+        $this->actingAs($owner)
+            ->post("/clients/{$client->id}/resend-invitation")
+            ->assertStatus(422);
+    }
+
     public function test_expired_invitation_link_is_rejected(): void
     {
         [$business, $owner] = $this->makeOwnerAndBusiness();

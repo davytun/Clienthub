@@ -62,6 +62,37 @@ class InvitationController extends Controller
     }
 
     /**
+     * Re-generate and re-send an invitation for a pending (unaccepted) client.
+     */
+    public function resend(User $client): RedirectResponse
+    {
+        // Only pending clients belonging to the authenticated business
+        abort_unless($client->business_id === auth()->user()->business_id, 403);
+        abort_if($client->hasAcceptedInvitation(), 422);
+
+        // 3 resends per staff member per hour
+        $throttleKey = 'resend-invite:' . auth()->id();
+        if (RateLimiter::tooManyAttempts($throttleKey, 3)) {
+            return back()->with('error', 'Too many resends. Please wait before trying again.');
+        }
+        RateLimiter::hit($throttleKey, 3600);
+
+        $business = auth()->user()->business;
+
+        $client->update(['invitation_token' => Str::random(64)]);
+
+        $inviteUrl = URL::temporarySignedRoute(
+            'client.invitation.accept',
+            now()->addHours(72),
+            ['token' => $client->invitation_token]
+        );
+
+        Mail::to($client->email)->queue(new ClientInvitationMail($client, $business, $inviteUrl));
+
+        return back()->with('success', "Invitation resent to {$client->name}.");
+    }
+
+    /**
      * Show the "set your password" form when client clicks the invite link.
      */
     public function accept(Request $request, string $token): View|RedirectResponse
