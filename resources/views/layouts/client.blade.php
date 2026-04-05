@@ -21,6 +21,10 @@
                            class="text-sm {{ request()->routeIs('client.projects.*') ? 'text-gray-900 font-medium border-b-2 border-indigo-500' : 'text-gray-500 hover:text-gray-700' }} py-5 inline-block">
                             My Projects
                         </a>
+                        <a href="{{ route('client.invoices.index') }}"
+                           class="text-sm {{ request()->routeIs('client.invoices.*') ? 'text-gray-900 font-medium border-b-2 border-indigo-500' : 'text-gray-500 hover:text-gray-700' }} py-5 inline-block ml-6">
+                            My Invoices
+                        </a>
                     </div>
                 </div>
                 <div class="flex items-center gap-4">
