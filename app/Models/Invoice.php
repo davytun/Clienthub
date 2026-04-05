@@ -50,7 +50,7 @@ class Invoice extends Model
 
     public function recalculateTotal(): void
     {
-        $this->total = $this->items()->sum(\DB::raw('quantity * unit_price'));
+        $this->total = $this->items->sum(fn ($item) => $item->quantity * $item->unit_price);
         $this->save();
     }
 }

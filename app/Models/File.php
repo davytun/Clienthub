@@ -5,8 +5,6 @@ namespace App\Models;
 use App\Scopes\BusinessScope;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Support\Facades\Storage;
-
 class File extends Model
 {
     protected $fillable = [
@@ -51,8 +49,5 @@ class File extends Model
         return round($bytes / 1048576, 1) . ' MB';
     }
 
-    public function url(): string
-    {
-        return Storage::url($this->path);
-    }
+
 }
