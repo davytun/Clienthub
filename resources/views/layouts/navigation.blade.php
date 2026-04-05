@@ -47,6 +47,12 @@
                             {{ __('Profile') }}
                         </x-dropdown-link>
 
+                        @if(Auth::user()->isOwner())
+                            <x-dropdown-link :href="route('settings.edit')">
+                                {{ __('Business Settings') }}
+                            </x-dropdown-link>
+                        @endif
+
                         <!-- Authentication -->
                         <form method="POST" action="{{ route('logout') }}">
                             @csrf

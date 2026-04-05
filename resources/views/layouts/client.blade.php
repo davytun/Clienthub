@@ -4,31 +4,50 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="csrf-token" content="{{ csrf_token() }}" />
-    <title>{{ config('app.name') }} — Client Portal</title>
+    <title>{{ auth()->guard('client')->user()->business->name ?? config('app.name') }} — Client Portal</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @php $brand = auth()->guard('client')->user()->business->brand_color ?? '#1D9E75'; @endphp
+    <style>
+        :root { --brand: {{ $brand }}; }
+        .brand-border  { border-color: var(--brand) !important; }
+        .brand-text    { color: var(--brand) !important; }
+        .brand-bg      { background-color: var(--brand) !important; }
+        .brand-active-tab { border-bottom: 2px solid var(--brand); color: #111; font-weight: 600; }
+    </style>
 </head>
 <body class="font-sans antialiased bg-gray-100">
 
-    <nav class="bg-white border-b border-gray-100">
+    @php
+        $business = auth()->guard('client')->user()->business;
+        $client   = auth()->guard('client')->user();
+    @endphp
+
+    <nav class="bg-white border-b-2 brand-border">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between h-16">
                 <div class="flex items-center">
-                    <a href="{{ route('client.projects.index') }}" class="font-semibold text-gray-800">
-                        {{ auth()->guard('client')->user()->business->name ?? config('app.name') }}
+                    {{-- Logo or business name --}}
+                    <a href="{{ route('client.projects.index') }}" class="flex items-center gap-2">
+                        @if($business->logo_path)
+                            <img src="{{ route('client.logo') }}" alt="{{ $business->name }}" class="h-8 object-contain" />
+                        @else
+                            <span class="font-semibold text-gray-800">{{ $business->name }}</span>
+                        @endif
                     </a>
+
                     <div class="hidden sm:flex sm:ms-8 space-x-6">
                         <a href="{{ route('client.projects.index') }}"
-                           class="text-sm {{ request()->routeIs('client.projects.*') ? 'text-gray-900 font-medium border-b-2 border-indigo-500' : 'text-gray-500 hover:text-gray-700' }} py-5 inline-block">
+                           class="text-sm py-5 inline-block px-1 {{ request()->routeIs('client.projects.*') ? 'brand-active-tab' : 'text-gray-500 hover:text-gray-700' }}">
                             My Projects
                         </a>
                         <a href="{{ route('client.invoices.index') }}"
-                           class="text-sm {{ request()->routeIs('client.invoices.*') ? 'text-gray-900 font-medium border-b-2 border-indigo-500' : 'text-gray-500 hover:text-gray-700' }} py-5 inline-block ml-6">
+                           class="text-sm py-5 inline-block px-1 {{ request()->routeIs('client.invoices.*') ? 'brand-active-tab' : 'text-gray-500 hover:text-gray-700' }}">
                             My Invoices
                         </a>
                     </div>
                 </div>
                 <div class="flex items-center gap-4">
-                    <span class="text-sm text-gray-500">{{ auth()->guard('client')->user()->name }}</span>
+                    <span class="text-sm text-gray-500">{{ $client->name }}</span>
                     <form method="POST" action="{{ route('client.logout') }}">
                         @csrf
                         <button type="submit" class="text-sm text-gray-500 hover:text-gray-700">Log out</button>

@@ -1,11 +1,13 @@
 <?php
 
 use App\Http\Controllers\Auth\ClientLoginController;
+use App\Http\Controllers\BusinessSettingsController;
 use App\Http\Controllers\Client\InvitationController;
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\FileController;
 use App\Http\Controllers\InvoiceController;
+use App\Http\Controllers\MessageController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProjectController;
 use Illuminate\Support\Facades\Route;
@@ -23,8 +25,9 @@ Route::middleware(['auth', 'auth.staff'])->group(function () {
     Route::get('/clients', [ClientController::class, 'index'])->name('clients.index');
     Route::post('/clients/invite', [InvitationController::class, 'send'])->name('clients.invite');
 
-    // Projects
+    // Projects + nested messages
     Route::resource('projects', ProjectController::class);
+    Route::post('/projects/{project}/messages', [MessageController::class, 'store'])->name('projects.messages.store');
 
     // Files
     Route::post('/projects/{project}/files', [FileController::class, 'store'])->name('projects.files.store');
@@ -36,6 +39,11 @@ Route::middleware(['auth', 'auth.staff'])->group(function () {
     Route::post('/invoices/{invoice}/send', [InvoiceController::class, 'send'])->name('invoices.send');
     Route::post('/invoices/{invoice}/paid', [InvoiceController::class, 'markPaid'])->name('invoices.markPaid');
     Route::get('/invoices/{invoice}/pdf', [InvoiceController::class, 'downloadPdf'])->name('invoices.downloadPdf');
+
+    // Business settings (owner only enforced in view with @can, route open to all staff)
+    Route::get('/settings', [BusinessSettingsController::class, 'edit'])->name('settings.edit');
+    Route::patch('/settings', [BusinessSettingsController::class, 'update'])->name('settings.update');
+    Route::get('/settings/logo', [BusinessSettingsController::class, 'logo'])->name('settings.logo');
 
     // Profile
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -65,7 +73,7 @@ Route::prefix('client')->name('client.')->group(function () {
         Route::get('/dashboard', [\App\Http\Controllers\Client\ProjectController::class, 'index'])
             ->name('dashboard');
 
-        // Projects
+        // Projects + nested messages
         Route::get('/projects', [\App\Http\Controllers\Client\ProjectController::class, 'index'])
             ->name('projects.index');
         Route::get('/projects/{project}', [\App\Http\Controllers\Client\ProjectController::class, 'show'])
@@ -73,6 +81,16 @@ Route::prefix('client')->name('client.')->group(function () {
         Route::get('/projects/{project}/files/{file}/download',
             [\App\Http\Controllers\Client\ProjectController::class, 'downloadFile'])
             ->name('projects.files.download');
+        Route::post('/projects/{project}/messages',
+            [\App\Http\Controllers\Client\MessageController::class, 'store'])
+            ->name('projects.messages.store');
+
+        // Business logo (for client portal nav)
+        Route::get('/logo', function () {
+            $business = auth()->guard('client')->user()->business;
+            abort_unless($business->logo_path && \Illuminate\Support\Facades\Storage::exists($business->logo_path), 404);
+            return \Illuminate\Support\Facades\Storage::response($business->logo_path);
+        })->name('logo');
 
         // Invoices
         Route::get('/invoices', [\App\Http\Controllers\Client\InvoiceController::class, 'index'])
