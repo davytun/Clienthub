@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Client;
 
 use App\Http\Controllers\Controller;
 use App\Mail\ClientInvitationMail;
+use App\Models\ActivityLog;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -57,6 +58,7 @@ class InvitationController extends Controller
         );
 
         Mail::to($client->email)->queue(new ClientInvitationMail($client, $business, $inviteUrl));
+        ActivityLog::record('client.invited', $client, ['name' => $client->name, 'email' => $client->email]);
 
         return back()->with('success', "Invitation sent to {$client->name}.");
     }

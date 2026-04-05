@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ActivityLog;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -48,6 +49,7 @@ class BusinessSettingsController extends Controller
         }
 
         $business->update($data);
+        ActivityLog::record('settings.updated', $business);
 
         return back()->with('success', 'Settings saved.');
     }

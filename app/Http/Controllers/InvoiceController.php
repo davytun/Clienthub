@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreInvoiceRequest;
 use App\Http\Requests\UpdateInvoiceRequest;
 use App\Mail\InvoiceSentMail;
+use App\Models\ActivityLog;
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
 use App\Models\User;
@@ -66,6 +67,8 @@ class InvoiceController extends Controller
             return $invoice;
         });
 
+        ActivityLog::record('invoice.created', $invoice, ['number' => $invoice->invoice_number]);
+
         return redirect()->route('invoices.show', $invoice)->with('success', "Invoice {$invoice->invoice_number} created.");
     }
 
@@ -119,6 +122,7 @@ class InvoiceController extends Controller
     {
         $this->authorize('delete', $invoice);
 
+        ActivityLog::record('invoice.deleted', $invoice, ['number' => $invoice->invoice_number]);
         $invoice->delete();
 
         return redirect()->route('invoices.index')->with('success', 'Invoice deleted.');
@@ -132,6 +136,7 @@ class InvoiceController extends Controller
         $this->authorize('send', $invoice);
 
         $invoice->update(['status' => 'sent']);
+        ActivityLog::record('invoice.sent', $invoice, ['number' => $invoice->invoice_number]);
 
         $invoice->load(['client', 'business', 'items']);
         Mail::to($invoice->client->email)->queue(new InvoiceSentMail($invoice));
@@ -147,6 +152,7 @@ class InvoiceController extends Controller
         $this->authorize('markPaid', $invoice);
 
         $invoice->update(['status' => 'paid']);
+        ActivityLog::record('invoice.paid', $invoice, ['number' => $invoice->invoice_number]);
 
         return back()->with('success', 'Invoice marked as paid.');
     }

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ActivityLog;
 use App\Models\File;
 use App\Models\Project;
 use Illuminate\Http\RedirectResponse;
@@ -39,7 +40,7 @@ class FileController extends Controller
         // Store on the default local disk (private — not publicly accessible)
         Storage::put($storagePath, file_get_contents($uploaded->getRealPath()));
 
-        File::create([
+        $file = File::create([
             'project_id'    => $project->id,
             'business_id'   => $project->business_id,
             'uploaded_by'   => auth()->id(),
@@ -47,6 +48,8 @@ class FileController extends Controller
             'path'          => $storagePath,
             'size_bytes'    => $uploaded->getSize(),
         ]);
+
+        ActivityLog::record('file.uploaded', $file, ['name' => $safeName, 'project_id' => $project->id]);
 
         return back()->with('success', 'File uploaded.');
     }
@@ -70,6 +73,7 @@ class FileController extends Controller
     {
         $this->authorize('delete', $file);
 
+        ActivityLog::record('file.deleted', $file, ['name' => $file->original_name]);
         Storage::delete($file->path);
         $file->delete();
 

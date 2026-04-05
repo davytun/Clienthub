@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Mail\StaffInvitationMail;
+use App\Models\ActivityLog;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -64,6 +65,7 @@ class StaffController extends Controller
         );
 
         Mail::to($member->email)->queue(new StaffInvitationMail($member, $business, $inviteUrl));
+        ActivityLog::record('staff.invited', $member, ['name' => $member->name, 'email' => $member->email]);
 
         return back()->with('success', "Invitation sent to {$member->name}.");
     }
@@ -120,6 +122,7 @@ class StaffController extends Controller
         // Cannot remove the only owner
         abort_if($member->isOwner(), 422);
 
+        ActivityLog::record('staff.removed', $member, ['name' => $member->name]);
         $member->delete();
 
         return back()->with('success', "{$member->name} has been removed from your team.");

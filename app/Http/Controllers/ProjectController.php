@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreProjectRequest;
 use App\Http\Requests\UpdateProjectRequest;
+use App\Models\ActivityLog;
 use App\Models\Project;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
@@ -42,13 +43,15 @@ class ProjectController extends Controller
             ->where('role', 'client')
             ->firstOrFail();
 
-        Project::create([
+        $project = Project::create([
             'business_id' => auth()->user()->business_id,
             'client_id'   => $client->id,
             'title'       => $request->title,
             'description' => $request->description,
             'status'      => $request->status,
         ]);
+
+        ActivityLog::record('project.created', $project, ['title' => $project->title]);
 
         return redirect()->route('projects.index')->with('success', 'Project created.');
     }
@@ -96,6 +99,8 @@ class ProjectController extends Controller
             'status'      => $request->status,
         ]);
 
+        ActivityLog::record('project.updated', $project, ['title' => $project->title]);
+
         return redirect()->route('projects.show', $project)->with('success', 'Project updated.');
     }
 
@@ -103,6 +108,7 @@ class ProjectController extends Controller
     {
         $this->authorize('delete', $project);
 
+        ActivityLog::record('project.deleted', $project, ['title' => $project->title]);
         $project->delete();
 
         return redirect()->route('projects.index')->with('success', 'Project deleted.');

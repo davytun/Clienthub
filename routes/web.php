@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ActivityController;
 use App\Http\Controllers\Auth\ClientLoginController;
 use App\Http\Controllers\BusinessSettingsController;
 use App\Http\Controllers\Client\InvitationController;
@@ -31,6 +32,9 @@ Route::middleware(['auth', 'auth.staff'])->group(function () {
     Route::get('/staff', [StaffController::class, 'index'])->name('staff.index');
     Route::post('/staff/invite', [StaffController::class, 'invite'])->name('staff.invite');
     Route::delete('/staff/{member}', [StaffController::class, 'destroy'])->name('staff.destroy');
+
+    // Activity log (owner only — enforced in controller)
+    Route::get('/activity', [ActivityController::class, 'index'])->name('activity.index');
 
     // Projects + nested messages
     Route::resource('projects', ProjectController::class);

@@ -64,6 +64,9 @@
                             <x-dropdown-link :href="route('settings.edit')">
                                 {{ __('Business Settings') }}
                             </x-dropdown-link>
+                            <x-dropdown-link :href="route('activity.index')">
+                                {{ __('Activity Log') }}
+                            </x-dropdown-link>
                         @endif
 
                         <!-- Authentication -->
