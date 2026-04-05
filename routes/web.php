@@ -10,6 +10,7 @@ use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\MessageController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProjectController;
+use App\Http\Controllers\StaffController;
 use Illuminate\Support\Facades\Route;
 
 // ─── Public landing ──────────────────────────────────────────────────────────
@@ -25,6 +26,11 @@ Route::middleware(['auth', 'auth.staff'])->group(function () {
     Route::get('/clients', [ClientController::class, 'index'])->name('clients.index');
     Route::post('/clients/invite', [InvitationController::class, 'send'])->name('clients.invite');
     Route::post('/clients/{client}/resend-invitation', [InvitationController::class, 'resend'])->name('clients.resend-invitation');
+
+    // Staff / team management (owner only — enforced in controller)
+    Route::get('/staff', [StaffController::class, 'index'])->name('staff.index');
+    Route::post('/staff/invite', [StaffController::class, 'invite'])->name('staff.invite');
+    Route::delete('/staff/{member}', [StaffController::class, 'destroy'])->name('staff.destroy');
 
     // Projects + nested messages
     Route::resource('projects', ProjectController::class);
@@ -58,6 +64,13 @@ Route::get('/invitation/{token}', [InvitationController::class, 'accept'])
 
 Route::post('/invitation/{token}', [InvitationController::class, 'activate'])
     ->name('client.invitation.activate');
+
+// ─── Staff invitation (signed URLs — no auth required) ───────────────────────
+Route::get('/staff-invitation/{token}', [StaffController::class, 'accept'])
+    ->name('staff.invitation.accept');
+
+Route::post('/staff-invitation/{token}', [StaffController::class, 'activate'])
+    ->name('staff.invitation.activate');
 
 // ─── Client portal ────────────────────────────────────────────────────────────
 Route::prefix('client')->name('client.')->group(function () {
